@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import Documents from './pages/Documents';
 import Users from './pages/Users';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -23,6 +24,7 @@ function App() {
           <div className="container mx-auto px-4 py-8">
             <Routes>
               <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
               <Route
                 path="/"
                 element={
@@ -55,4 +57,4 @@ function App() {
   );
 }
 
-export default App;
+export default App
