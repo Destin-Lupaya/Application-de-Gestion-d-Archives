@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
+import { User } from '@supabase/supabase-js';
+import { supabaseMock } from '../lib/supabaseMock';
 
 interface AuthContextType {
   user: User | null;
@@ -10,10 +11,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
+// Use mock client instead of real Supabase client
+const supabase = supabaseMock;
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);

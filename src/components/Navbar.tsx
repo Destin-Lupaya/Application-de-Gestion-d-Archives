@@ -1,13 +1,11 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { FileArchive, LayoutDashboard, Users, LogOut } from 'lucide-react';
+import { FileArchive, LayoutDashboard, Users, LogOut, LogIn, User, Home, Info, Mail } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Navbar = () => {
   const { user, signOut } = useAuth();
   const location = useLocation();
-
-  if (!user) return null;
 
   return (
     <nav className="bg-white shadow-lg">
@@ -28,8 +26,8 @@ const Navbar = () => {
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
               >
-                <LayoutDashboard className="h-4 w-4" />
-                <span>Tableau de bord</span>
+                <Home className="h-4 w-4" />
+                <span>Accueil</span>
               </Link>
               
               <Link
@@ -41,10 +39,10 @@ const Navbar = () => {
                 }`}
               >
                 <FileArchive className="h-4 w-4" />
-                <span>Documents</span>
+                <span>Enregistrer Archive</span>
               </Link>
-              
-              {user.role === 'admin' && (
+
+              {user?.role === 'admin' && (
                 <Link
                   to="/users"
                   className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium ${
@@ -57,18 +55,66 @@ const Navbar = () => {
                   <span>Utilisateurs</span>
                 </Link>
               )}
+
+              <Link
+                to="/profile"
+                className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium ${
+                  location.pathname === '/profile'
+                    ? 'bg-indigo-100 text-indigo-700'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <User className="h-4 w-4" />
+                <span>Profil</span>
+              </Link>
+
+              <Link
+                to="/about"
+                className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium ${
+                  location.pathname === '/about'
+                    ? 'bg-indigo-100 text-indigo-700'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <Info className="h-4 w-4" />
+                <span>À propos</span>
+              </Link>
+
+              <Link
+                to="/contact"
+                className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium ${
+                  location.pathname === '/contact'
+                    ? 'bg-indigo-100 text-indigo-700'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <Mail className="h-4 w-4" />
+                <span>Contact</span>
+              </Link>
             </div>
           </div>
           
           <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-700">{user.email}</span>
-            <button
-              onClick={signOut}
-              className="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100"
-            >
-              <LogOut className="h-4 w-4" />
-              <span>Déconnexion</span>
-            </button>
+            {user ? (
+              <>
+                <span className="text-sm text-gray-700">{user.email}</span>
+                <button
+                  onClick={signOut}
+                  className="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Déconnexion</span>
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/login"
+                className="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium text-indigo-600 hover:text-indigo-500"
+              >
+                <LogIn className="h-4 w-4" />
+                <span>Connexion</span>
+              </Link>
+            )}
           </div>
         </div>
       </div>

@@ -1,18 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
-import { FileText, File, Presentation, FileSpreadsheet as Spreadsheet, Upload } from 'lucide-react';
+import { FileText, File, Presentation, FileSpreadsheet as Spreadsheet, Upload, Eye } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import type { Document } from '../types';
+import { supabaseMock } from '../lib/supabaseMock';
+import DocumentPreview from '../components/DocumentPreview';
 
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
+const supabase = supabaseMock;
 
 const Documents = () => {
   const { user } = useAuth();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
 
   useEffect(() => {
     fetchDocuments();
@@ -117,11 +116,23 @@ const Documents = () => {
                 <p className="text-sm text-gray-500">
                   {(doc.size / 1024 / 1024).toFixed(2)} MB
                 </p>
+                <button
+                  onClick={() => setSelectedDocument(doc)}
+                  className="mt-2 flex items-center text-sm text-indigo-600 hover:text-indigo-500"
+                >
+                  <Eye className="h-4 w-4 mr-1" />
+                  Prévisualiser
+                </button>
               </div>
             </div>
           </div>
         ))}
       </div>
+
+      <DocumentPreview
+        document={selectedDocument}
+        onClose={() => setSelectedDocument(null)}
+      />
     </div>
   );
 };
