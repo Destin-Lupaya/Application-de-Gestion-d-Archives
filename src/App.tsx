@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import Documents from './pages/Documents';
 import Users from './pages/Users';
 import Profile from './pages/Profile';
+import Settings from './pages/Settings';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import Login from './pages/Login';
@@ -41,6 +42,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Users />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute>
+                    <Settings />
                   </ProtectedRoute>
                 }
               />

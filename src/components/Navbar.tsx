@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { FileArchive, LayoutDashboard, Users, LogOut, LogIn, User, Home, Info, Mail } from 'lucide-react';
+import { FileArchive, LayoutDashboard, Users, LogOut, LogIn, User, Home, Info, Mail, Settings } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Navbar = () => {
@@ -67,6 +67,20 @@ const Navbar = () => {
                 <User className="h-4 w-4" />
                 <span>Profil</span>
               </Link>
+
+              {user && (
+                <Link
+                  to="/settings"
+                  className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium ${
+                    location.pathname === '/settings'
+                      ? 'bg-indigo-100 text-indigo-700'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <Settings className="h-4 w-4" />
+                  <span>Paramètres</span>
+                </Link>
+              )}
 
               <Link
                 to="/about"
