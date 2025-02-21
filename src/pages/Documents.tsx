@@ -2,22 +2,32 @@ import React, { useState, useEffect } from 'react';
 import { FileText, File, Presentation, FileSpreadsheet as Spreadsheet, Upload, Eye } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import type { Document } from '../types';
-import { supabaseMock } from '../lib/supabaseMock';
+import { supabaseMock as supabase } from '../lib/supabaseMock';
 import DocumentPreview from '../components/DocumentPreview';
-
-const supabase = supabaseMock;
+import { offlineStorage } from '../services/offlineStorage';
+import { useOfflineMode } from '../hooks/useOfflineMode';
+import { useNotifications } from '../context/NotificationContext';
+import SyncStatus from '../components/SyncStatus';
 
 const Documents = () => {
   const { user } = useAuth();
+  const { isOffline } = useOfflineMode();
+  const { addNotification } = useNotifications();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [uploading, setUploading] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
 
   useEffect(() => {
     fetchDocuments();
-  }, []);
+  }, [isOffline]);
 
   const fetchDocuments = async () => {
+    if (isOffline) {
+      const offlineDocs = await offlineStorage.getAllDocuments();
+      setDocuments(offlineDocs.map(doc => doc.document_data));
+      return;
+    }
+
     const { data } = await supabase
       .from('documents')
       .select('*')
@@ -35,7 +45,11 @@ const Documents = () => {
     const fileExt = file.name.split('.').pop()?.toLowerCase();
     
     if (!['doc', 'docx', 'pdf', 'ppt', 'pptx', 'xls', 'xlsx'].includes(fileExt || '')) {
-      alert('Type de fichier non supporté');
+      addNotification({
+        type: 'error',
+        title: 'Type de fichier non supporté',
+        message: 'Veuillez sélectionner un fichier au format Word, PDF, PowerPoint ou Excel.',
+      });
       return;
     }
 
@@ -46,28 +60,54 @@ const Documents = () => {
                       fileExt.startsWith('pdf') ? 'pdf' :
                       fileExt.startsWith('ppt') ? 'ppt' : 'xls';
 
-      const { data, error } = await supabase.storage
-        .from('documents')
-        .upload(`${user?.id}/${Date.now()}-${file.name}`, file);
+      const document = {
+        id: crypto.randomUUID(),
+        name: file.name,
+        type: fileType,
+        url: URL.createObjectURL(file),
+        size: file.size,
+        user_id: user?.id || '',
+        created_at: new Date().toISOString(),
+      } as Document;
 
-      if (error) throw error;
-
-      const { error: dbError } = await supabase
-        .from('documents')
-        .insert({
-          name: file.name,
-          type: fileType,
-          url: data.path,
-          size: file.size,
-          user_id: user?.id,
+      if (isOffline) {
+        await offlineStorage.saveDocument(document);
+        addNotification({
+          type: 'info',
+          title: 'Document sauvegardé hors ligne',
+          message: 'Le document sera synchronisé automatiquement lors de la reconnexion.',
         });
+      } else {
+        const { data, error } = await supabase.storage
+          .from('documents')
+          .upload(`${user?.id}/${Date.now()}-${file.name}`, file);
 
-      if (dbError) throw dbError;
+        if (error) throw error;
+
+        const { error: dbError } = await supabase
+          .from('documents')
+          .insert({
+            ...document,
+            url: data.path,
+          });
+
+        if (dbError) throw dbError;
+
+        addNotification({
+          type: 'success',
+          title: 'Document téléchargé',
+          message: 'Le document a été ajouté avec succès.',
+        });
+      }
 
       await fetchDocuments();
     } catch (error) {
       console.error('Error uploading file:', error);
-      alert('Erreur lors du téléchargement');
+      addNotification({
+        type: 'error',
+        title: 'Erreur de téléchargement',
+        message: 'Une erreur est survenue lors du téléchargement du document.',
+      });
     } finally {
       setUploading(false);
     }
@@ -88,17 +128,20 @@ const Documents = () => {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Documents</h1>
         
-        <label className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 cursor-pointer">
-          <Upload className="h-5 w-5 mr-2" />
-          <span>Télécharger</span>
-          <input
-            type="file"
-            className="hidden"
-            accept=".doc,.docx,.pdf,.ppt,.pptx,.xls,.xlsx"
-            onChange={handleFileUpload}
-            disabled={uploading}
-          />
-        </label>
+        <div className="flex items-center space-x-4">
+          <SyncStatus />
+          <label className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 cursor-pointer">
+            <Upload className="h-5 w-5 mr-2" />
+            <span>Télécharger</span>
+            <input
+              type="file"
+              className="hidden"
+              accept=".doc,.docx,.pdf,.ppt,.pptx,.xls,.xlsx"
+              onChange={handleFileUpload}
+              disabled={uploading}
+            />
+          </label>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
